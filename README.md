@@ -119,3 +119,9 @@ This CUDA pipeline replicates that - on raw GPU kernels, no framework.
 ## Why an octopus?
 
 Eight arms. Eight GPU cores. Coincidence? 🐙
+
+---
+
+## Acknowledgements
+
+Built with assistance from [Claude](https://claude.ai) (Anthropic) for code review and README drafting. Core idea, architecture decisions, implementation and octopus idea 🐙 are my own.

@@ -1,9 +1,9 @@
 /* ==========================================================================
- * GPU Image Preprocessing Pipeline — Demo
+ * GPU Image Preprocessing Pipeline - Demo
  * CS6023: GPU Programming, IIT Madras
  *
  * Loads a real color image, runs 4 CUDA kernels:
- *   grayscale → resize → center-crop → normalize
+ *   grayscale -> resize -> center-crop -> normalize
  * Saves before/after PNGs.
  *
  * Follows standard ImageNet preprocessing:
@@ -50,7 +50,7 @@
 /* ------------------------------------------------------------------
  * KERNEL 1: Grayscale
  * One thread per pixel.
- * RGB interleaved → single float using weighted luma formula.
+ * RGB interleaved -> single float using weighted luma formula.
  * ------------------------------------------------------------------ */
 __global__ void grayscaleKernel(const unsigned char *d_rgb,
                                 float *d_gray, int H, int W)
@@ -79,7 +79,7 @@ __global__ void resizeKernel(const float *d_gray, float *d_resized,
     unsigned oy = blockIdx.y * blockDim.y + threadIdx.y; /* output row */
     if (oy >= Hr || ox >= Wr) return;
 
-    /* Scale: map output coords → input coords (align corners) */
+    /* Scale: map output coords -> input coords (align corners) */
     float scaleY = (Hr > 1) ? (float)(H - 1) / (float)(Hr - 1) : 0.0f;
     float scaleX = (Wr > 1) ? (float)(W - 1) / (float)(Wr - 1) : 0.0f;
 
@@ -105,7 +105,7 @@ __global__ void resizeKernel(const float *d_gray, float *d_resized,
 /* ------------------------------------------------------------------
  * KERNEL 3: Center Crop
  * One thread per output pixel.
- * Skips equal margins on each side — pure index offset, no math.
+ * Skips equal margins on each side - pure index offset, no math.
  * ------------------------------------------------------------------ */
 __global__ void cropKernel(const float *d_resized, float *d_cropped,
                            int Hr, int Wr, int Hc, int Wc)
@@ -124,7 +124,7 @@ __global__ void cropKernel(const float *d_resized, float *d_cropped,
 /* ------------------------------------------------------------------
  * KERNEL 4: Normalize
  * One thread per pixel.
- * Converts 0-255 → zero-centered floats expected by neural networks.
+ * Converts 0-255 -> zero-centered floats expected by neural networks.
  * Formula: (pixel/255 - mean) / std
  * ------------------------------------------------------------------ */
 __global__ void normalizeKernel(const float *d_cropped, float *d_out,
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
     float *h_cropped = (float *)malloc(nPixCrop * sizeof(float));
 
     /* ----------------------------------------------------------
-     * ALLOCATE GPU MEMORY — one buffer per pipeline stage
+     * ALLOCATE GPU MEMORY - one buffer per pipeline stage
      * ---------------------------------------------------------- */
     unsigned char *d_rgb;
     float *d_gray, *d_resized, *d_cropped, *d_out;
@@ -184,7 +184,7 @@ int main(int argc, char **argv)
     CUDA_CHECK(cudaMalloc(&d_out,     nPixCrop * sizeof(float)));
 
     /* ----------------------------------------------------------
-     * COPY INPUT: CPU → GPU
+     * COPY INPUT: CPU -> GPU
      * ---------------------------------------------------------- */
     CUDA_CHECK(cudaMemcpy(d_rgb, h_rgb, nRgb * sizeof(unsigned char),
                           cudaMemcpyHostToDevice));
@@ -194,40 +194,40 @@ int main(int argc, char **argv)
      * ---------------------------------------------------------- */
     unsigned blockSize = 256;
 
-    /* Stage 1: Grayscale — 1D grid */
+    /* Stage 1: Grayscale - 1D grid */
     grayscaleKernel<<<CEIL_DIV(H*W, blockSize), blockSize>>>(
         d_rgb, d_gray, H, W);
     CUDA_CHECK(cudaDeviceSynchronize());
     printf("Done: grayscale\n");
 
-    /* Stage 2: Resize — 2D grid (one thread per output pixel) */
+    /* Stage 2: Resize - 2D grid (one thread per output pixel) */
     dim3 block2D(16, 16);
     resizeKernel<<<dim3(CEIL_DIV(Wr,16), CEIL_DIV(Hr,16)), block2D>>>(
         d_gray, d_resized, H, W, Hr, Wr);
     CUDA_CHECK(cudaDeviceSynchronize());
-    printf("Done: resize %dx%d → %dx%d\n", H, W, Hr, Wr);
+    printf("Done: resize %dx%d -> %dx%d\n", H, W, Hr, Wr);
 
-    /* Stage 3: Center Crop — 2D grid */
+    /* Stage 3: Center Crop - 2D grid */
     cropKernel<<<dim3(CEIL_DIV(Wc,16), CEIL_DIV(Hc,16)), block2D>>>(
         d_resized, d_cropped, Hr, Wr, Hc, Wc);
     CUDA_CHECK(cudaDeviceSynchronize());
-    printf("Done: center crop → %dx%d\n", Hc, Wc);
+    printf("Done: center crop -> %dx%d\n", Hc, Wc);
 
-    /* Stage 4: Normalize — 1D grid */
+    /* Stage 4: Normalize - 1D grid */
     normalizeKernel<<<CEIL_DIV(Hc*Wc, blockSize), blockSize>>>(
         d_cropped, d_out, Hc, Wc, MEAN, STD);
     CUDA_CHECK(cudaDeviceSynchronize());
     printf("Done: normalize (mean=%.3f, std=%.3f)\n", MEAN, STD);
 
     /* ----------------------------------------------------------
-     * COPY RESULT: GPU → CPU
+     * COPY RESULT: GPU -> CPU
      * We use d_cropped (0-255 range) for the output PNG.
-     * d_out (normalized) has values like -1.2, 0.4 — not visual.
+     * d_out (normalized) has values like -1.2, 0.4 - not visual.
      * ---------------------------------------------------------- */
     CUDA_CHECK(cudaMemcpy(h_cropped, d_cropped, nPixCrop * sizeof(float),
                           cudaMemcpyDeviceToHost));
 
-    /* Convert float → unsigned char for PNG */
+    /* Convert float -> unsigned char for PNG */
     unsigned char *h_out_uchar = (unsigned char *)malloc(nPixCrop);
     for (size_t i = 0; i < nPixCrop; i++) {
         float v = h_cropped[i];
