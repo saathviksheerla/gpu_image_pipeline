@@ -70,7 +70,8 @@ Outputs saved in the current directory:
 
 ---
 
-## Run on Google Colab
+## Run on Google Colab 
+#### Tutorial video will be added soon..
 
 No local GPU? Use Colab (free T4 GPU):
 
