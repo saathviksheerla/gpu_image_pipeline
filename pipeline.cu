@@ -154,7 +154,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "ERROR: could not load %s\n", argv[1]);
         return 1;
     }
-    printf("Loaded: dog.jpg (%d x %d, %d channels)\n", W, H, channels);
+    printf("Loaded: %s (%d x %d, RGB)\n", W, H);
 
     /* Save original color image for README before/after comparison */
     stbi_write_png("original.png", W, H, 3, h_rgb, W * 3);
